@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Central de Cobros</title>
+
+<style>
+
+body{
+font-family: Arial;
+background:#f4f6f9;
+margin:0;
+padding:20px;
+}
+
+.container{
+max-width:500px;
+margin:auto;
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+text-align:center;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#00a859;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;
+}
+
+button:hover{
+background:#008f4d;
+}
+
+.pago{
+background:#f1f1f1;
+padding:10px;
+border-radius:6px;
+margin-top:10px;
+}
+
+.codigo{
+font-size:20px;
+font-weight:bold;
+color:#00a859;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Central de Cobros</h2>
+
+<input id="cliente" placeholder="Nombre cliente">
+
+<input id="valor" placeholder="Valor">
+
+<button onclick="crearPago()">Generar Cobro</button>
+
+<div id="codigoPago"></div>
+
+<h3>Pagos generados</h3>
+
+<div id="listaPagos"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyDGqJeIuTqMQ6EuBRS4oTA5oKYdZUOj1IU",
+authDomain: "deposito-asegurado-guia.firebaseapp.com",
+databaseURL: "https://deposito-asegurado-guia-default-rtdb.firebaseio.com/",
+projectId: "deposito-asegurado-guia",
+storageBucket: "deposito-asegurado-guia.firebasestorage.app",
+messagingSenderId: "747606323990",
+appId: "1:747606323990:web:666d89869ef24398391637"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.crearPago = function(){
+
+let cliente = document.getElementById("cliente").value;
+let valor = document.getElementById("valor").value;
+
+let codigo = Math.floor(100000 + Math.random()*900000);
+
+push(ref(db,"pagos"),{
+cliente:cliente,
+valor:valor,
+codigo:codigo,
+estado:"pendiente",
+fecha:new Date().toLocaleString()
+});
+
+document.getElementById("codigoPago").innerHTML =
+"Codigo de pago: <span class='codigo'>" + codigo + "</span>";
+
+}
+
+const pagosRef = ref(db,"pagos");
+
+onValue(pagosRef,(snapshot)=>{
+
+let data = snapshot.val();
+
+let html = "";
+
+for(let id in data){
+
+let p = data[id];
+
+html += `
+<div class="pago">
+Cliente: ${p.cliente}<br>
+Valor: $${p.valor}<br>
+Codigo: ${p.codigo}<br>
+Estado: ${p.estado}
+</div>
+`;
+
+}
+
+document.getElementById("listaPagos").innerHTML = html;
+
+});
+
+</script>
+
+</body>
+</html>
