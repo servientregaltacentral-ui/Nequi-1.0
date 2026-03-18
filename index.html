@@ -3,157 +3,131 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Central de Cobros</title>
 
 <style>
-
-body{
-font-family: Arial;
-background:#f4f6f9;
-margin:0;
-padding:20px;
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
+  margin: 0;
+  padding: 20px;
 }
 
-.container{
-max-width:500px;
-margin:auto;
-background:white;
-padding:25px;
-border-radius:10px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
+.container {
+  max-width: 500px;
+  margin: auto;
 }
 
-h2{
-text-align:center;
+h1 {
+  text-align: center;
 }
 
-input{
-width:100%;
-padding:12px;
-margin-top:10px;
-border:1px solid #ccc;
-border-radius:6px;
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-button{
-width:100%;
-padding:12px;
-margin-top:15px;
-background:#00a859;
-color:white;
-border:none;
-border-radius:6px;
-font-size:16px;
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #00c853;
+  color: white;
+  font-size: 16px;
+  margin-top: 10px;
+  cursor: pointer;
 }
 
-button:hover{
-background:#008f4d;
+button:hover {
+  background: #009624;
 }
 
-.pago{
-background:#f1f1f1;
-padding:10px;
-border-radius:6px;
-margin-top:10px;
+select, input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
-
-.codigo{
-font-size:20px;
-font-weight:bold;
-color:#00a859;
-}
-
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<h2>Central de Cobros</h2>
+<h1>💳 Central de Cobros</h1>
 
-<input id="cliente" placeholder="Nombre cliente">
+<div class="card">
+  <label>Selecciona comercio:</label>
+  <select id="comercio">
+    <option value="ropa">Tienda Ropa</option>
+    <option value="tecnologia">Tienda Tecnología</option>
+    <option value="servicios">Servicios Digitales</option>
+  </select>
 
-<input id="valor" placeholder="Valor">
+  <label>Valor a cobrar:</label>
+  <input type="number" id="monto" placeholder="Ej: 50000">
 
-<button onclick="crearPago()">Generar Cobro</button>
+  <button onclick="pagar()">Generar pago</button>
+</div>
 
-<div id="codigoPago"></div>
-
-<h3>Pagos generados</h3>
-
-<div id="listaPagos"></div>
+<div class="card" id="resultado" style="display:none;">
+  <h3>🔗 Link generado:</h3>
+  <p id="link"></p>
+  <button onclick="irPago()">Ir a pagar</button>
+</div>
 
 </div>
 
-<script type="module">
+<script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+// 🔧 TU LINK DE WOMPI
+const WOMPI_URL = "https://checkout.wompi.co/l/2KJR8m";
 
-const firebaseConfig = {
-apiKey: "AIzaSyDGqJeIuTqMQ6EuBRS4oTA5oKYdZUOj1IU",
-authDomain: "deposito-asegurado-guia.firebaseapp.com",
-databaseURL: "https://deposito-asegurado-guia-default-rtdb.firebaseio.com/",
-projectId: "deposito-asegurado-guia",
-storageBucket: "deposito-asegurado-guia.firebasestorage.app",
-messagingSenderId: "747606323990",
-appId: "1:747606323990:web:666d89869ef24398391637"
+// 📦 Comercios
+const comercios = {
+  ropa: "Tienda Ropa",
+  tecnologia: "Tienda Tecnología",
+  servicios: "Servicios Digitales"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+let ultimoLink = "";
 
-window.crearPago = function(){
+// 🚀 Generar pago
+function pagar() {
 
-let cliente = document.getElementById("cliente").value;
-let valor = document.getElementById("valor").value;
+  const comercio = document.getElementById("comercio").value;
+  const monto = document.getElementById("monto").value;
 
-let codigo = Math.floor(100000 + Math.random()*900000);
+  if (!monto || monto <= 0) {
+    alert("Ingresa un monto válido");
+    return;
+  }
 
-push(ref(db,"pagos"),{
-cliente:cliente,
-valor:valor,
-codigo:codigo,
-estado:"pendiente",
-fecha:new Date().toLocaleString()
-});
+  // 🔑 referencia única
+  const referencia = comercio + "_" + Date.now();
 
-document.getElementById("codigoPago").innerHTML =
-"Codigo de pago: <span class='codigo'>" + codigo + "</span>";
+  // 🔗 construir link
+  const link = `${WOMPI_URL}?amount-in-cents=${monto*100}&reference=${referencia}`;
 
+  ultimoLink = link;
+
+  document.getElementById("resultado").style.display = "block";
+  document.getElementById("link").innerText = link;
 }
 
-const pagosRef = ref(db,"pagos");
-
-onValue(pagosRef,(snapshot)=>{
-
-let data = snapshot.val();
-
-let html = "";
-
-for(let id in data){
-
-let p = data[id];
-
-html += `
-<div class="pago">
-Cliente: ${p.cliente}<br>
-Valor: $${p.valor}<br>
-Codigo: ${p.codigo}<br>
-Estado: ${p.estado}
-</div>
-`;
-
+// 👉 Ir a pagar
+function irPago() {
+  window.location.href = ultimoLink;
 }
-
-document.getElementById("listaPagos").innerHTML = html;
-
-});
 
 </script>
 
 </body>
 </html>
-   
